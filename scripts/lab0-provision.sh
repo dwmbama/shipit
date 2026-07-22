@@ -26,6 +26,14 @@
 # ---------------------------------------------------------------------------
 set -euo pipefail
 
+# On Windows Git Bash (MSYS2), any argument that looks like a POSIX path
+# (starts with /) gets silently rewritten into a Windows path before it
+# reaches a native .exe like az -- so "--scope /subscriptions/..." becomes
+# garbage and every role assignment below fails with a confusing
+# "MissingSubscription" error that has nothing to do with subscriptions.
+# This disables that rewriting. Harmless on macOS/Linux, where it's unset.
+export MSYS_NO_PATHCONV=1
+
 INITIALS="${1:?your initials required, e.g. jrs}"
 LOCATION="${LOCATION:-eastus}"
 REPO="shipit"
