@@ -82,13 +82,6 @@ app.MapPost("/api/shipments", (ShipmentInput input, ShipmentStore store) =>
     return Results.Created($"/api/shipments/{created.Id}", created);
 });
 
-// ---------------------------------------------------------------------------
-// VULNERABLE — CodeQL flags this as command injection (cs/command-line-injection).
-// The route parameter {host} flows unmodified into a shell command line.
-// ---------------------------------------------------------------------------
-// ---------------------------------------------------------------------------
-// FIXED — no shell, and the input is validated. CodeQL no longer flags it.
-// ---------------------------------------------------------------------------
 app.MapGet("/trace/{host}", (string host) =>
 {
     // Only allow simple hostnames; run the binary directly with an argument list
