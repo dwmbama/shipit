@@ -1,5 +1,6 @@
 using ShipIt.Models;
 using ShipIt.Services;
+using System.Diagnostics;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -79,6 +80,17 @@ app.MapPost("/api/shipments", (ShipmentInput input, ShipmentStore store) =>
 
     var created = store.Add(input.Destination.Trim());
     return Results.Created($"/api/shipments/{created.Id}", created);
+});
+
+// ---------------------------------------------------------------------------
+// VULNERABLE — CodeQL flags this as command injection (cs/command-line-injection).
+// The route parameter {host} flows unmodified into a shell command line.
+// ---------------------------------------------------------------------------
+app.MapGet("/trace/{host}", (string host) =>
+{
+    // BAD: user input concatenated into a shell command.
+    Process.Start("/bin/sh", $"-c \"ping -c 1 {host}\"");
+    return Results.Ok($"tracing {host}");
 });
 
 app.Run();
