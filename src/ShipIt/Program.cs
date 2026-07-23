@@ -86,10 +86,21 @@ app.MapPost("/api/shipments", (ShipmentInput input, ShipmentStore store) =>
 // VULNERABLE — CodeQL flags this as command injection (cs/command-line-injection).
 // The route parameter {host} flows unmodified into a shell command line.
 // ---------------------------------------------------------------------------
+// ---------------------------------------------------------------------------
+// FIXED — no shell, and the input is validated. CodeQL no longer flags it.
+// ---------------------------------------------------------------------------
 app.MapGet("/trace/{host}", (string host) =>
 {
-    // BAD: user input concatenated into a shell command.
-    Process.Start("/bin/sh", $"-c \"ping -c 1 {host}\"");
+    // Only allow simple hostnames; run the binary directly with an argument list
+    // (no shell = nothing to inject into).
+    if (!System.Text.RegularExpressions.Regex.IsMatch(host, "^[A-Za-z0-9.-]{1,253}$"))
+        return Results.BadRequest("invalid host");
+
+    var psi = new ProcessStartInfo("ping");
+    psi.ArgumentList.Add("-c");
+    psi.ArgumentList.Add("1");
+    psi.ArgumentList.Add(host);
+    Process.Start(psi);
     return Results.Ok($"tracing {host}");
 });
 
